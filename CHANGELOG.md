@@ -1,3 +1,8 @@
+## Unreleased
+
+* [FEATURE] Add -non-api-path-passthrough flag (disabled by default), which allows
+ exposing all non API resources from upstream without enforcing (e.g Prometheus UI).
+
 ## 0.2.0 / 2020-10-08
 
 * [FEATURE] Add support for /api/v1/rules (Prometheus/Thanos). #16

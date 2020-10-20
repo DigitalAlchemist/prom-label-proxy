@@ -31,12 +31,17 @@ func main() {
 		insecureListenAddress string
 		upstream              string
 		label                 string
+		nonAPIPathPassthrough bool
 	)
 
 	flagset := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
 	flagset.StringVar(&insecureListenAddress, "insecure-listen-address", "", "The address the prom-label-proxy HTTP server should listen on.")
 	flagset.StringVar(&upstream, "upstream", "", "The upstream URL to proxy to.")
-	flagset.StringVar(&label, "label", "", "The label to enforce in all proxied PromQL queries.")
+	flagset.StringVar(&label, "label", "", "The label to enforce in all proxied PromQL queries. This label will be also required as the URL parameter to get the value to be injected."+
+		"For example: -label=tenant will make it required for this proxy to have URL in form of: <URL>?tenant=abc&other_params...")
+	flagset.BoolVar(&nonAPIPathPassthrough, "non-api-path-passthrough", false, "If enabled prom-label-proxy will proxy all requests to non recognized paths (except /api/*) to the upstream, without any enforcing."+
+		"Use carefully as it can easily cause a data leak if upstream have other read APIs that prom-label-proxy is not aware.")
+
 	//nolint: errcheck // Parse() will exit on error.
 	flagset.Parse(os.Args[1:])
 	if label == "" {
@@ -52,7 +57,7 @@ func main() {
 		log.Fatalf("Invalid scheme for upstream URL %q, only 'http' and 'https' are supported", upstream)
 	}
 
-	routes := injectproxy.NewRoutes(upstreamURL, label)
+	routes := injectproxy.NewRoutes(upstreamURL, label, nonAPIPathPassthrough)
 	mux := http.NewServeMux()
 	mux.Handle("/", routes)
 
